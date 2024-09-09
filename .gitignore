@@ -1,0 +1,27 @@
+# Node.js
+node_modules/
+.env
+*.log
+npm-debug.log*
+
+
+# OS-specific
+Thumbs.db   
+
+# Logs
+logs/
+*.log
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Editor-specific
+.vscode/
+.idea/
+*.swp
