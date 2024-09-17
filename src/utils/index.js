@@ -14,8 +14,8 @@ const hashPassword = async (plainPassword) => {
 
 const isCorrectPassword = async (password, hashedPassword) => {
   try {
-    const isCorrect = await bcryptjs.compare(password, hashedPassword);
-    return isCorrect;
+    const isCorrectPass = await bcryptjs.compare(password, hashedPassword);
+    return isCorrectPass;
   } catch (err) {
     console.error(err);
     throw err;
