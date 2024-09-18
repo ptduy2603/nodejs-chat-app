@@ -1,7 +1,8 @@
 const UserModel = require("../models/userModel");
 const { hashPassword, isCorrectPassword } = require("../../utils");
 const jwt = require("jsonwebtoken");
-const { JWT_EXPIRES_IN, JWT_SECRET_KEY } = require("../../constant");
+const { JWT_EXPIRES_IN, JWT_SECRET_KEY } = require("../../constants");
+const cloudynary = require("../../configs/cloudinary");
 
 class authController {
   //[GET]: /auth/users
@@ -147,6 +148,39 @@ class authController {
       console.error(err);
       next(err);
       return res.status(400).json({ message: `Change password error ${err}` });
+    }
+  }
+
+  // [POST]: /auth/change-avatar
+  async uploadAvatar(req, res) {
+    try {
+      const { avatar } = req.body;
+      const user = req.user;
+
+      if (!avatar) {
+        return res.status(400).json({ message: "Avatar is required" });
+      }
+
+      const editedUser = await UserModel.findOne({ _id: user?.id });
+      if (!editedUser) {
+        return res.status(400).json({ message: "User does not exist" });
+      }
+
+      const result = await cloudynary.uploader.upload(avatar, {
+        upload_preset: "chat_app",
+        public_id: `${editedUser?.id}_avatar`,
+        allowed_formats: ["png", "jpg", "jpeg", "svg", "icon", "jfif", "webp"],
+      });
+
+      editedUser.avatar = result?.secure_url ?? editedUser.avatar;
+      await editedUser.save();
+      return res.status(201).json({
+        message: "Upload avatar successfully",
+        avatar: result?.secure_url,
+      });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ message: `Upload avatar error: ${err}` });
     }
   }
 }

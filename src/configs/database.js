@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const { PORT, DATABASE_API_KEY } = require("../constant");
+const { PORT, DATABASE_API_KEY } = require("../constants");
 
 async function connectDatabase(app) {
   try {

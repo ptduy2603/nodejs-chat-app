@@ -7,6 +7,7 @@ const tokenVerify = require("../middlewares/tokenVerify");
 router.get("/users", authController.getAllUsers);
 router.post("/login", authController.login);
 router.post("/register", authController.register);
+router.post("/upload-avatar", tokenVerify, authController.uploadAvatar);
 router.put("/change-password", tokenVerify, authController.changePassword);
 
 module.exports = router;

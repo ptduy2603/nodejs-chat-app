@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const { JWT_SECRET_KEY } = require("../constant");
+const { JWT_SECRET_KEY } = require("../constants");
 
 const tokenVerify = (req, res, next) => {
   const headerToken = req?.headers?.authorization;
@@ -14,7 +14,7 @@ const tokenVerify = (req, res, next) => {
     next();
   } catch (error) {
     console.error(error);
-    return res.status(400).json({ message: "Token is invalid or expired" });
+    return res.status(401).json({ message: "Token is invalid or expired" });
   }
 };
 
