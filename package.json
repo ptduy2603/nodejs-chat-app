@@ -20,6 +20,8 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.6.1",
     "morgan": "^1.10.0",
-    "nodemon": "^3.1.4"
+    "nodemailer": "^6.9.15",
+    "nodemon": "^3.1.4",
+    "otp-generator": "^4.0.1"
   }
 }

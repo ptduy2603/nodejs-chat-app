@@ -8,6 +8,9 @@ router.get("/users", authController.getAllUsers);
 router.post("/login", authController.login);
 router.post("/register", authController.register);
 router.post("/upload-avatar", tokenVerify, authController.uploadAvatar);
+router.post("/forgot-password", authController.forgotPassword);
+router.post("/verify-otp", authController.verifyOtpPassword);
+router.post("/reset-password", authController.resetPassword);
 router.put("/change-password", tokenVerify, authController.changePassword);
 
 module.exports = router;

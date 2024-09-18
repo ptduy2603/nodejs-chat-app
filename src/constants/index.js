@@ -5,6 +5,9 @@ const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "24h";
 const CLOUDYNARY_NAME = process.env.CLOUDYNARY_NAME;
 const CLOUDYNARY_API_KEY = process.env.CLOUDYNARY_API_KEY;
 const CLOUDYNARY_API_SECRET = process.env.CLOUDYNARY_API_SECRET;
+const EMAIL_SERVICE = process.env.EMAIL_SERVICE;
+const EMAIL_SERVICE_PASSWORD = process.env.EMAIL_SERVICE_PASSWORD;
+const OTP_EXPIRY = 10 * 60 * 1000; //miliseconds
 
 module.exports = {
   PORT,
@@ -14,4 +17,7 @@ module.exports = {
   CLOUDYNARY_API_KEY,
   CLOUDYNARY_API_SECRET,
   CLOUDYNARY_NAME,
+  EMAIL_SERVICE,
+  EMAIL_SERVICE_PASSWORD,
+  OTP_EXPIRY,
 };

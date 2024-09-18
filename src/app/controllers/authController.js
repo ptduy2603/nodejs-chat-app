@@ -1,7 +1,16 @@
 const UserModel = require("../models/userModel");
-const { hashPassword, isCorrectPassword } = require("../../utils");
+const {
+  hashPassword,
+  isCorrectPassword,
+  sendEmail,
+  generateOtp,
+} = require("../../utils");
 const jwt = require("jsonwebtoken");
-const { JWT_EXPIRES_IN, JWT_SECRET_KEY } = require("../../constants");
+const {
+  JWT_EXPIRES_IN,
+  JWT_SECRET_KEY,
+  OTP_EXPIRY,
+} = require("../../constants");
 const cloudynary = require("../../configs/cloudinary");
 
 class authController {
@@ -116,7 +125,7 @@ class authController {
     }
   }
 
-  // [PUT]: /auth/change-password
+  //[PUT]: /auth/change-password
   async changePassword(req, res, next) {
     const { currentPassword, newPassword } = req.body;
 
@@ -151,7 +160,7 @@ class authController {
     }
   }
 
-  // [POST]: /auth/change-avatar
+  //[POST]: /auth/change-avatar
   async uploadAvatar(req, res) {
     try {
       const { avatar } = req.body;
@@ -183,6 +192,139 @@ class authController {
       return res.status(500).json({ message: `Upload avatar error: ${err}` });
     }
   }
+
+  //[POST]: /auth/forgot-password
+  async forgotPassword(req, res) {
+    try {
+      const { email } = req.body;
+      if (!email) return res.status(400).json({ message: "Email is required" });
+
+      const user = await UserModel.findOne({ email });
+      if (!user) return res.status(404).json({ message: "User not found" });
+
+      const otp = generateOtp();
+      user.otpResetPassword = otp;
+      user.otpResetPasswordExpiry = Date.now() + OTP_EXPIRY;
+      await user.save();
+
+      const htmlContent = `
+          <div>
+            <h1>ChatApp - Reset Password OTP</h1>
+            <h2>Hello, ${user?.username}</h2>
+            <p style="font-size:16px">Your OTP is: <strong>${otp}</strong></p>
+            <p>This OTP will expire in <strong>${
+              OTP_EXPIRY / 60000
+            } minutes</strong>. If you didn't request a password reset, please ignore this email or contact support.</p>
+            <p>Thank you,<br>Duy Pham - Admin</p>
+          </div>
+        `;
+      await sendEmail(
+        user?.email,
+        "Chatapp Reset Password OTP",
+        null,
+        htmlContent
+      );
+      return res
+        .status(201)
+        .json({ message: "Sent OTP to email successfully" });
+    } catch (err) {
+      console.error("Send email error: " + err);
+      return res.status(500).json({ message: `Send email error: ${err}` });
+    }
+  }
+
+  //[POST]: /auth/verify-otp
+  async verifyOtpPassword(req, res) {
+    try {
+      const { email, otp } = req.body;
+      if (!email || !otp) {
+        return res.status(400).json({ message: "Email and OTP are required" });
+      }
+
+      const user = await UserModel.findOne({ email });
+      if (!user) return res.status(404).json({ message: "User not found" });
+
+      const userOtp = user?.otpResetPassword;
+      const userOtpExpiry = user?.otpResetPasswordExpiry;
+      if (!userOtp || userOtp !== otp)
+        return res.status(400).json({ message: "OTP is incorrect" });
+
+      if (userOtpExpiry < Date.now())
+        return res.status(400).json({ message: "OTP is expired" });
+
+      // prevent users from direct accessing /reset-password endpoint by using token
+      const tempToken = jwt.sign(
+        {
+          id: user?._id,
+        },
+        JWT_SECRET_KEY,
+        {
+          expiresIn: "10m",
+          algorithm: "HS256",
+        }
+      );
+
+      user.otpResetPassword = null;
+      user.otpResetPasswordExpiry = null;
+      await user.save();
+
+      return res
+        .status(200)
+        .json({ message: "Verify OTP successfully", token: tempToken });
+    } catch (error) {
+      console.error(`OTP verification error: ${error}`);
+      return res
+        .status(500)
+        .json({ message: `OTP verification error: ${error}` });
+    }
+  }
+
+  //[POST]: /auth/reset-password
+  async resetPassword(req, res) {
+    try {
+      const headerToken = req.headers.authorization;
+      if (!headerToken || !headerToken.startsWith("Bearer "))
+        return res
+          .status(401)
+          .json({ message: "Verification token is required" });
+
+      const token = headerToken.slice(7);
+      const { newPassword } = req.body;
+      if (!newPassword)
+        return res.status(400).json({ message: "New password is required" });
+
+      let decodedPayload;
+      try {
+        decodedPayload = jwt.verify(token, JWT_SECRET_KEY, {
+          algorithms: ["HS256"],
+        });
+      } catch (err) {
+        if (err.name === "TokenExpiredError") {
+          return res.status(401).json({ message: "Token is expired" });
+        }
+        return res.status(401).json({ message: "Invalid token" });
+      }
+
+      const { id } = decodedPayload;
+
+      const user = await UserModel.findOne({ _id: id });
+      if (!user) return res.status(400).json({ message: "User not found" });
+
+      user.password = await hashPassword(newPassword);
+      await user.save();
+
+      res.status(200).json({ message: "Reset password successfully" });
+    } catch (error) {
+      console.error(`Reset password error: ${error}`);
+      return res
+        .status(500)
+        .json({ message: `Reset password error: ${error}` });
+    }
+  }
+
+  //[POST]: /auth/login/google
+
+  //[POST]: /auth/login/facebook
 }
 
 module.exports = new authController();
