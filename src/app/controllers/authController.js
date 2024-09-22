@@ -12,6 +12,7 @@ const {
   OTP_EXPIRY,
 } = require("../../constants");
 const cloudynary = require("../../configs/cloudinary");
+const verifyGoogleToken = require("../../middlewares/verifyGoogleToken");
 
 class authController {
   //[GET]: /auth/users
@@ -86,37 +87,21 @@ class authController {
 
       // check if the email exist in database
       const existingUser = await UserModel.findOne({ email });
-      if (existingUser) {
+      if (existingUser && !existingUser?.googleId) {
         return res.status(404).json({ message: "Email already exists" });
       }
 
       // hashing password
       const hashedPassword = await hashPassword(password);
-      let newUser = await UserModel.create({
+      await UserModel.create({
         username,
         email,
         password: hashedPassword,
         avatar: avatar ?? "",
       });
 
-      newUser = newUser.toObject();
-      const user = {
-        id: newUser?._id,
-        username: newUser?.username,
-        email: newUser?.email,
-        avatar: newUser?.avatar,
-      };
-
-      // creating JWT
-      const token = jwt.sign(user, JWT_SECRET_KEY, {
-        expiresIn: JWT_EXPIRES_IN,
-        algorithm: "HS256",
-      });
-
       return res.status(201).json({
         message: "Register new user successfully",
-        user,
-        token,
       });
     } catch (error) {
       console.error(error);
@@ -323,6 +308,78 @@ class authController {
   }
 
   //[POST]: /auth/login/google
+  async loginWithGoogle(req, res) {
+    try {
+      const { email, username, avatar } = req.body;
+      const headerToken = req.headers.authorization;
+      if (!headerToken || !headerToken.startsWith("Bearer ")) {
+        return res
+          .status(401)
+          .json({ message: "Goolge verification token is required" });
+      }
+
+      if (!email) {
+        return res.status(400).json({ message: "Email is required" });
+      }
+
+      if (!username) {
+        return res.status(400).json({ message: "Username is required" });
+      }
+
+      if (!avatar) {
+        return res.status(400).json({ message: "Avatar is required" });
+      }
+
+      const googleToken = headerToken.slice(7);
+
+      const id = await verifyGoogleToken(googleToken);
+      const hashedGoogleId = await hashPassword(id);
+      const existingUser = await UserModel.findOne({
+        email: email,
+      });
+      var user = {};
+
+      // if the google account exists in database
+      if (existingUser && existingUser?.googleId) {
+        user = {
+          id: existingUser?._id,
+          username: existingUser?.username,
+          email: existingUser?.email,
+          avatar: existingUser?.avatar,
+        };
+      } else {
+        const newUser = await UserModel.create({
+          username,
+          email,
+          googleId: hashedGoogleId,
+          avatar,
+        });
+
+        user = {
+          id: newUser?._id,
+          username: newUser?.username,
+          email: newUser?.email,
+          avatar: newUser.avatar,
+        };
+      }
+
+      const token = jwt.sign(user, JWT_SECRET_KEY, {
+        algorithm: "HS256",
+        expiresIn: JWT_EXPIRES_IN,
+      });
+
+      return res.status(201).json({
+        message: "Login with google successfully",
+        user,
+        token,
+      });
+    } catch (error) {
+      console.error(`Login with google error: ${error}`);
+      return res
+        .status(500)
+        .json({ message: `Login with google error: ${error}` });
+    }
+  }
 
   //[POST]: /auth/login/facebook
 }

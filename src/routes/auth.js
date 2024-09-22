@@ -5,6 +5,7 @@ const tokenVerify = require("../middlewares/tokenVerify");
 
 // /auth
 router.get("/users", authController.getAllUsers);
+router.post("/login/google", authController.loginWithGoogle);
 router.post("/login", authController.login);
 router.post("/register", authController.register);
 router.post("/upload-avatar", tokenVerify, authController.uploadAvatar);
