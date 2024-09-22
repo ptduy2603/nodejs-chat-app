@@ -5,32 +5,30 @@ const userSchema = new Schema(
   {
     username: {
       type: String,
-      unique: false,
       required: true,
       trim: true,
     },
     email: {
       type: String,
-      unique: false,
+      default: null,
     },
     password: {
       type: String,
-      unique: false,
       default: null,
     },
     avatar: {
       type: String,
-      unique: false,
     },
     googleId: {
       type: String,
-      required: false,
-      unique: false,
+      default: null,
+    },
+    facebookId: {
+      type: String,
       default: null,
     },
     isActive: {
       type: Boolean,
-      unique: false,
       default: true,
     },
     otpResetPassword: String,

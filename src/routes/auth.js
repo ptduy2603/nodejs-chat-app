@@ -1,10 +1,11 @@
 const express = require("express");
 const router = express.Router();
-const authController = require("../app/controllers/authController");
+const authController = require("../app/controllers/auth.controller");
 const tokenVerify = require("../middlewares/tokenVerify");
 
 // /auth
 router.get("/users", authController.getAllUsers);
+router.post("/login/facebook", authController.loginWithFacebook);
 router.post("/login/google", authController.loginWithGoogle);
 router.post("/login", authController.login);
 router.post("/register", authController.register);

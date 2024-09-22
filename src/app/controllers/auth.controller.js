@@ -12,7 +12,7 @@ const {
   OTP_EXPIRY,
 } = require("../../constants");
 const cloudynary = require("../../configs/cloudinary");
-const verifyGoogleToken = require("../../middlewares/verifyGoogleToken");
+const verifyFirebaseToken = require("../../middlewares/verifyFirebaseToken");
 
 class authController {
   //[GET]: /auth/users
@@ -332,7 +332,7 @@ class authController {
 
       const googleToken = headerToken.slice(7);
 
-      const id = await verifyGoogleToken(googleToken);
+      const id = await verifyFirebaseToken(googleToken);
       const hashedGoogleId = await hashPassword(id);
       const existingUser = await UserModel.findOne({
         email: email,
@@ -382,6 +382,72 @@ class authController {
   }
 
   //[POST]: /auth/login/facebook
+  async loginWithFacebook(req, res) {
+    try {
+      const { username, avatar } = req.body;
+      const headerToken = req.headers.authorization;
+      if (!headerToken || !headerToken.startsWith("Bearer ")) {
+        return res
+          .status(401)
+          .json({ message: "Facebook verification token is required" });
+      }
+
+      if (!username) {
+        return res.status(400).json({ message: "Username is required" });
+      }
+
+      if (!avatar) {
+        return res.status(400).json({ message: "Avatar is required" });
+      }
+
+      const facebookToken = headerToken.slice(7);
+
+      const id = await verifyFirebaseToken(facebookToken);
+      const existingUser = (await UserModel.find({})).find(
+        (user) => user?.facebookId && isCorrectPassword(id, user?.facebookId)
+      );
+      var user = {};
+
+      if (existingUser) {
+        user = {
+          id: existingUser?._id,
+          username: existingUser?.username,
+          email: existingUser?.email,
+          avatar: existingUser?.avatar,
+        };
+      } else {
+        const hashedFacebookId = await hashPassword(id);
+        const newUser = await UserModel.create({
+          username,
+          facebookId: hashedFacebookId,
+          avatar,
+        });
+
+        user = {
+          id: newUser?._id,
+          username: newUser?.username,
+          email: newUser?.email,
+          avatar: newUser.avatar,
+        };
+      }
+
+      const token = jwt.sign(user, JWT_SECRET_KEY, {
+        algorithm: "HS256",
+        expiresIn: JWT_EXPIRES_IN,
+      });
+
+      return res.status(201).json({
+        message: "Login with facebook successfully",
+        user,
+        token,
+      });
+    } catch (error) {
+      console.error(`Login with facebook error: ${error}`);
+      return res
+        .status(500)
+        .json({ message: `Login with facebook error: ${error}` });
+    }
+  }
 }
 
 module.exports = new authController();

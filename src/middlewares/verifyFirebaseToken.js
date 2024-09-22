@@ -5,7 +5,7 @@ admin.initializeApp({
   credential: admin.credential.cert(JSON.parse(FIREBASE_ADMIN_CREDENTIALS)),
 });
 
-const verifyGoogleToken = async (token) => {
+const verifyFirebaseToken = async (token) => {
   try {
     const decodedToken = await admin.auth().verifyIdToken(token);
     const userId = decodedToken.uid;
@@ -16,4 +16,4 @@ const verifyGoogleToken = async (token) => {
   }
 };
 
-module.exports = verifyGoogleToken;
+module.exports = verifyFirebaseToken;

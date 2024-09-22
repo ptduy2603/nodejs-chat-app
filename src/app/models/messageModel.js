@@ -29,6 +29,7 @@ const messageSchema = new mongoose.Schema(
     messageType: {
       type: String,
       required: true,
+      default: "text",
     },
     reactions: [
       {
