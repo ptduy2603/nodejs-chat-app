@@ -11,7 +11,7 @@ const verifyFirebaseToken = async (token) => {
     const userId = decodedToken.uid;
     return userId;
   } catch (error) {
-    console.error("Google token verification error: " + error);
+    console.error("Token verification error: " + error);
     throw new Error("Invalid token");
   }
 };

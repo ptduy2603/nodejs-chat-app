@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 const PORT = process.env.PORT || 3000;
 const DATABASE_API_KEY = process.env.DATABASE_API_KEY || "";
 const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
