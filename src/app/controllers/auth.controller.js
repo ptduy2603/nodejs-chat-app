@@ -27,6 +27,29 @@ class authController {
     }
   }
 
+  //[GET]: /auth/user
+  async getUserByToken(req, res) {
+    const user = req.user;
+    try {
+      const resultUser = await UserModel.findOne({ _id: user.id });
+      if (resultUser) {
+        return res.status(200).json({
+          message: "Fetch user successfully",
+          user: {
+            id: resultUser?._id,
+            username: resultUser?.username,
+            avatar: resultUser?.avatar,
+            email: resultUser?.email,
+          },
+        });
+      }
+      return res.status(401).json({ message: "User not found" });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: `Find user error ${error}` });
+    }
+  }
+
   //[POST]: /auth/login
   async login(req, res, next) {
     try {
@@ -40,11 +63,11 @@ class authController {
 
       const existingUser = await UserModel.findOne({ email });
       if (!existingUser) {
-        return res.status(400).json({ message: "Email is incorrect" });
+        return res.status(400).json({ message: "Email is not existing" });
       }
 
       if (!(await isCorrectPassword(password, existingUser?.password))) {
-        return res.status(401).json({ message: "Password is incorrect" });
+        return res.status(400).json({ message: "Password is incorrect" });
       }
 
       const user = {
