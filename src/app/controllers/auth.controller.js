@@ -4,14 +4,15 @@ const {
   isCorrectPassword,
   sendEmail,
   generateOtp,
+  uploadImageToCloudinary,
 } = require("../../utils");
 const jwt = require("jsonwebtoken");
 const {
   JWT_EXPIRES_IN,
   JWT_SECRET_KEY,
   OTP_EXPIRY,
+  DEFAULT_AVATAR,
 } = require("../../constants");
-const cloudynary = require("../../configs/cloudinary");
 const verifyFirebaseToken = require("../../middlewares/verifyFirebaseToken");
 
 class authController {
@@ -116,12 +117,24 @@ class authController {
 
       // hashing password
       const hashedPassword = await hashPassword(password);
-      await UserModel.create({
+
+      const newUser = await UserModel.create({
         username,
         email,
         password: hashedPassword,
-        avatar: avatar ?? "",
       });
+
+      // upload user's avatar
+      if (avatar) {
+        const uploadedAvatar = await uploadImageToCloudinary(
+          avatar,
+          `${newUser._id}_avatar`
+        );
+
+        newUser.avatar = uploadedAvatar ? uploadedAvatar : DEFAULT_AVATAR;
+      }
+
+      await newUser.save();
 
       return res.status(201).json({
         message: "Register new user successfully",
@@ -183,21 +196,22 @@ class authController {
         return res.status(400).json({ message: "User does not exist" });
       }
 
-      const result = await cloudynary.uploader.upload(avatar, {
-        upload_preset: "chat_app",
-        public_id: `${editedUser?.id}_avatar`,
-        allowed_formats: ["png", "jpg", "jpeg", "svg", "icon", "jfif", "webp"],
-      });
+      const newAvatar = await uploadImageToCloudinary(
+        avatar,
+        `${editedUser?._id}_avatar`
+      );
 
-      editedUser.avatar = result?.secure_url ?? editedUser.avatar;
+      editedUser.avatar = newAvatar ?? editedUser.avatar;
       await editedUser.save();
       return res.status(201).json({
         message: "Upload avatar successfully",
-        avatar: result?.secure_url,
+        avatar: newAvatar,
       });
     } catch (err) {
-      console.error(err);
-      return res.status(500).json({ message: `Upload avatar error: ${err}` });
+      console.error(err?.message || err);
+      return res
+        .status(500)
+        .json({ message: `Upload avatar error: ${err?.message || err}` });
     }
   }
 

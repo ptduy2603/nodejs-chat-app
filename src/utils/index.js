@@ -2,6 +2,7 @@ const bcryptjs = require("bcryptjs");
 const otpGenerator = require("otp-generator");
 const nodemailer = require("nodemailer");
 const { EMAIL_SERVICE, EMAIL_SERVICE_PASSWORD } = require("../constants");
+const cloudinary = require("../configs/cloudinary");
 
 // handle hashing password
 const hashPassword = async (plainPassword) => {
@@ -33,6 +34,7 @@ const generateOtp = () => {
   });
 };
 
+// handle mail services
 const sendEmail = async (
   email,
   subject = "Chatapp confirmation OTP",
@@ -62,7 +64,36 @@ const sendEmail = async (
     return await transporter.sendMail(mailOptions);
   } catch (error) {
     console.error("Send email error: " + error);
+    throw error;
   }
 };
 
-module.exports = { hashPassword, isCorrectPassword, generateOtp, sendEmail };
+// handle images processing with cloudinary
+const uploadImageToCloudinary = async (image, publicId) => {
+  // image should be base64
+  if (!image.trim() || !publicId.trim())
+    throw new Error("Image and public id are required");
+
+  const options = {
+    overwrite: true,
+    invalidate: true,
+    upload_preset: "chat_app",
+    public_id: publicId,
+    allowed_formats: ["png", "jpg", "jpeg", "svg", "icon", "jfif", "webp"],
+  };
+
+  try {
+    const result = await cloudinary.uploader.upload(image, options);
+    return result.secure_url;
+  } catch (error) {
+    throw error;
+  }
+};
+
+module.exports = {
+  hashPassword,
+  isCorrectPassword,
+  generateOtp,
+  sendEmail,
+  uploadImageToCloudinary,
+};
