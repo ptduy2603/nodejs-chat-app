@@ -19,7 +19,8 @@ class authController {
   //[GET]: /auth/users
   async getAllUsers(req, res, next) {
     try {
-      const users = await UserModel.find({});
+      const user = req.user;
+      const users = await UserModel.find({ _id: { $ne: user.id } });
       return res.status(200).json({ users });
     } catch (error) {
       console.error(error);
@@ -48,6 +49,50 @@ class authController {
     } catch (error) {
       console.error(error);
       return res.status(500).json({ message: `Find user error ${error}` });
+    }
+  }
+
+  //[GET]: /auth/search?searchValue=
+  async searchUsers(req, res) {
+    const { searchValue } = req.query;
+    const finder = req.user;
+    if (!searchValue || !searchValue.trim())
+      return res
+        .status(400)
+        .json({ message: "Search input query is required" });
+
+    try {
+      console.log(searchValue.replace(/"/g, "").trim());
+      const mongoQuery = {
+        $or: [
+          {
+            username: {
+              $regex: searchValue.replace(/"/g, "").trim(),
+              $options: "i",
+            },
+          },
+          {
+            email: {
+              $regex: searchValue.replace(/"/g, "").trim(),
+              $options: "i",
+            },
+          },
+        ],
+        // remove user that search this result in case the user'information includes
+        _id: { $ne: finder.id },
+      };
+
+      const users = await UserModel.find(mongoQuery);
+      console.log(users);
+
+      return res
+        .status(200)
+        .json({ message: "Search users successfully", users });
+    } catch (error) {
+      console.error(error);
+      return res
+        .status(500)
+        .json({ message: `User searching error: ${error}` });
     }
   }
 

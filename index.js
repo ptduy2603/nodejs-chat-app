@@ -2,9 +2,9 @@ const express = require("express");
 const morgan = require("morgan");
 const bodyParser = require("body-parser");
 const cors = require("cors");
+const http = require("http");
 
 const { CLIENT_DOMAIN } = require("./src/constants");
-const http = require("http");
 const configSocketIo = require("./src/configs/socket_io");
 const appRouting = require("./src/routes");
 const { connectDatabase } = require("./src/configs/database");

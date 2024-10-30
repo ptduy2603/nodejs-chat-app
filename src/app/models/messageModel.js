@@ -2,22 +2,23 @@ const mongoose = require("mongoose");
 
 const messageSchema = new mongoose.Schema(
   {
-    userId: {
+    sender: {
       type: mongoose.SchemaTypes.ObjectId,
       ref: "users",
       required: true,
     },
-    chatId: {
+    chat: {
       type: mongoose.SchemaTypes.ObjectId,
       ref: "chats",
       default: null,
     },
-    originalMessageId: {
+    originalMessage: {
+      // use for reply feature
       type: mongoose.SchemaTypes.ObjectId,
       ref: "messages",
       default: null,
     },
-    chatGroupId: {
+    chatGroup: {
       type: mongoose.SchemaTypes.ObjectId,
       ref: "chatgroups",
       default: null,
@@ -28,12 +29,11 @@ const messageSchema = new mongoose.Schema(
     },
     messageType: {
       type: String,
-      required: true,
       default: "text",
     },
     reactions: [
       {
-        userId: {
+        user: {
           type: mongoose.SchemaTypes.ObjectId,
           required: true,
           ref: "users",
