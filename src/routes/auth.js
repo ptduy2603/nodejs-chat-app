@@ -4,7 +4,7 @@ const authController = require("../app/controllers/auth.controller");
 const tokenVerify = require("../middlewares/tokenVerify");
 
 // /auth
-router.get("/users", authController.getAllUsers);
+router.get("/users", tokenVerify, authController.getAllUsers);
 router.get("/user", tokenVerify, authController.getUserByToken);
 router.get("/search", tokenVerify, authController.searchUsers);
 router.post("/login/facebook", authController.loginWithFacebook);

@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
+const { applyTransformOutput } = require("../../utils");
 
 const userSchema = new Schema(
   {
@@ -38,6 +39,9 @@ const userSchema = new Schema(
     timestamps: true,
   }
 );
+
+// apply transform data
+applyTransformOutput(userSchema);
 
 const userModel = mongoose.model("users", userSchema);
 module.exports = userModel;

@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { applyTransformOutput } = require("../../utils");
 
 const chatGroupSchema = new mongoose.Schema(
   {
@@ -25,5 +26,7 @@ const chatGroupSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+applyTransformOutput(chatGroupSchema);
 
 module.exports = mongoose.model("chatgroups", chatGroupSchema);

@@ -5,6 +5,7 @@ const {
   sendEmail,
   generateOtp,
   uploadImageToCloudinary,
+  formatUserResult,
 } = require("../../utils");
 const jwt = require("jsonwebtoken");
 const {
@@ -62,7 +63,6 @@ class authController {
         .json({ message: "Search input query is required" });
 
     try {
-      console.log(searchValue.replace(/"/g, "").trim());
       const mongoQuery = {
         $or: [
           {
@@ -83,11 +83,11 @@ class authController {
       };
 
       const users = await UserModel.find(mongoQuery);
-      console.log(users);
+      const result = users.map(formatUserResult);
 
       return res
         .status(200)
-        .json({ message: "Search users successfully", users });
+        .json({ message: "Search users successfully", users: result });
     } catch (error) {
       console.error(error);
       return res
@@ -116,12 +116,7 @@ class authController {
         return res.status(400).json({ message: "Password is incorrect" });
       }
 
-      const user = {
-        id: existingUser?._id,
-        username: existingUser?.username,
-        email: existingUser?.email,
-        avatar: existingUser?.avatar,
-      };
+      const user = formatUserResult(existingUser);
 
       // creating JWT
       const token = jwt.sign(user, JWT_SECRET_KEY, {
@@ -423,12 +418,7 @@ class authController {
 
       // if the google account exists in database
       if (existingUser && existingUser?.googleId) {
-        user = {
-          id: existingUser?._id,
-          username: existingUser?.username,
-          email: existingUser?.email,
-          avatar: existingUser?.avatar,
-        };
+        user = formatUserResult(existingUser);
       } else {
         const newUser = await UserModel.create({
           username,
@@ -437,12 +427,7 @@ class authController {
           avatar,
         });
 
-        user = {
-          id: newUser?._id,
-          username: newUser?.username,
-          email: newUser?.email,
-          avatar: newUser.avatar,
-        };
+        user = formatUserResult(newUser);
       }
 
       const token = jwt.sign(user, JWT_SECRET_KEY, {
@@ -491,12 +476,7 @@ class authController {
       var user = {};
 
       if (existingUser) {
-        user = {
-          id: existingUser?._id,
-          username: existingUser?.username,
-          email: existingUser?.email,
-          avatar: existingUser?.avatar,
-        };
+        user = formatUserResult(existingUser);
       } else {
         const hashedFacebookId = await hashPassword(id);
         const newUser = await UserModel.create({
@@ -505,12 +485,7 @@ class authController {
           avatar,
         });
 
-        user = {
-          id: newUser?._id,
-          username: newUser?.username,
-          email: newUser?.email,
-          avatar: newUser.avatar,
-        };
+        user = formatUserResult(newUser);
       }
 
       const token = jwt.sign(user, JWT_SECRET_KEY, {

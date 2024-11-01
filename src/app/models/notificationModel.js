@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { applyTransformOutput } = require("../../utils");
 
 const notificationModel = new mongoose.Schema(
   {
@@ -20,5 +21,7 @@ const notificationModel = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+applyTransformOutput(notificationModel);
 
 module.exports = mongoose.model("notifications", notificationModel);
