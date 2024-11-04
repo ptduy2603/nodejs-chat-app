@@ -82,12 +82,11 @@ class authController {
         _id: { $ne: finder.id },
       };
 
-      const users = await UserModel.find(mongoQuery);
-      const result = users.map(formatUserResult);
+      const users = await UserModel.find(mongoQuery).select("-password");
 
       return res
         .status(200)
-        .json({ message: "Search users successfully", users: result });
+        .json({ message: "Search users successfully", users });
     } catch (error) {
       console.error(error);
       return res
@@ -116,17 +115,18 @@ class authController {
         return res.status(400).json({ message: "Password is incorrect" });
       }
 
-      const user = formatUserResult(existingUser);
+      const result = existingUser.toObject();
+      delete existingUser.password;
 
       // creating JWT
-      const token = jwt.sign(user, JWT_SECRET_KEY, {
+      const token = jwt.sign(result, JWT_SECRET_KEY, {
         expiresIn: JWT_EXPIRES_IN,
         algorithm: "HS256",
       });
 
       return res.status(200).json({
         message: "Login successfully",
-        user,
+        user: result,
         token,
       });
     } catch (error) {
@@ -152,7 +152,7 @@ class authController {
       // check if the email exist in database
       const existingUser = await UserModel.findOne({ email });
       if (existingUser && !existingUser?.googleId) {
-        return res.status(404).json({ message: "Email already exists" });
+        return res.status(400).json({ message: "Email already exists" });
       }
 
       // hashing password
@@ -418,7 +418,8 @@ class authController {
 
       // if the google account exists in database
       if (existingUser && existingUser?.googleId) {
-        user = formatUserResult(existingUser);
+        user = existingUser.toObject();
+        delete user.password;
       } else {
         const newUser = await UserModel.create({
           username,
@@ -427,7 +428,8 @@ class authController {
           avatar,
         });
 
-        user = formatUserResult(newUser);
+        user = newUser.toObject();
+        delete user.password;
       }
 
       const token = jwt.sign(user, JWT_SECRET_KEY, {
@@ -476,7 +478,8 @@ class authController {
       var user = {};
 
       if (existingUser) {
-        user = formatUserResult(existingUser);
+        user = existingUser.toObject();
+        delete user.password;
       } else {
         const hashedFacebookId = await hashPassword(id);
         const newUser = await UserModel.create({
@@ -485,7 +488,8 @@ class authController {
           avatar,
         });
 
-        user = formatUserResult(newUser);
+        user = newUser.toObject();
+        delete user.password;
       }
 
       const token = jwt.sign(user, JWT_SECRET_KEY, {

@@ -90,21 +90,6 @@ const uploadImageToCloudinary = async (image, publicId) => {
   }
 };
 
-// handle format user's information to return to client
-const formatUserResult = (user) => {
-  if (!user) return {};
-  // update this array when have other excluded fields
-  user = user.toObject();
-  const excludedFields = ["_id", "password", "__v"];
-  const result = { ...user };
-  result.id = result._id;
-  for (field of excludedFields) {
-    delete result[field];
-  }
-
-  return result;
-};
-
 // apply transform _id to id whenever return data to client
 const applyTransformOutput = (schema) => {
   schema.set("toJSON", {
@@ -131,6 +116,5 @@ module.exports = {
   generateOtp,
   sendEmail,
   uploadImageToCloudinary,
-  formatUserResult,
   applyTransformOutput,
 };
